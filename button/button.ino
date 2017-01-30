@@ -7,10 +7,9 @@
 #include <PubSubClient.h>
 
 struct Config {
-  const String id = ""; // unused?
-
   const int ledPin = 5;
   const int buttonPin = 0;
+  const String role = "relaybutton";
 
   const String wifiSsid = "jhaven";
   const String wifiPassword = "abcdefgh";
@@ -22,19 +21,26 @@ struct Config {
   const char *mqttPassword = "mypassword";
 } cfg;
 
+
+const auto participant = msgflo::Participant{
+  { role: cfg.role },
+  { icon: "lightbulb-o" },
+  { component: "fosdem2017/RelayAndButton" },
+  { label: "does the funkyfunky" },
+  { id: cfg.role },
+};
+
 WiFiClient wifiClient; // used by WiFi
 PubSubClient mqttClient;
 msgflo::Engine *engine;
 msgflo::OutPort *buttonPort;
 msgflo::InPort *ledPort;
+
 long nextButtonCheck = 0;
 
 void setup() {
   Serial.begin(115200);
   delay(100);
-  Serial.println();
-  Serial.println();
-  Serial.println();
 
   Serial.printf("Configuring wifi: %s\r\n", cfg.wifiSsid.c_str());
   WiFi.begin(cfg.wifiSsid.c_str(), cfg.wifiPassword.c_str());
@@ -42,17 +48,14 @@ void setup() {
   mqttClient.setServer(cfg.mqttHost, cfg.mqttPort);
   mqttClient.setClient(wifiClient);
 
-  const String clientId = "msgflo-button-" + WiFi.macAddress();
+  const String clientId = cfg.role + WiFi.macAddress();
 
-  engine = msgflo::pubsub::createPubSubClientEngine(
-             "fosdem2017/RelayAndButton",
-             "Sends button state and allows controlling a relay",
-             "lightbulb-o",
-             &mqttClient, clientId.c_str(), cfg.mqttUsername, cfg.mqttPassword);
+  engine = msgflo::pubsub::createPubSubClientEngine(participant, &mqttClient,
+    clientId.c_str(), cfg.mqttUsername, cfg.mqttPassword);
 
-  buttonPort = engine->addOutPort("button-event", "any", "public/msgflo/button/" + cfg.id + "/event");
+  buttonPort = engine->addOutPort("button-event", "any", cfg.role+"/button");
 
-  ledPort = engine->addInPort("led", "boolean", "public/msgflo/fofo/led", [](byte *data, int length) -> void {
+  ledPort = engine->addInPort("led", "boolean", cfg.role+"/led", [](byte *data, int length) -> void {
       const std::string in((char *)data, length);
       const boolean on = (in == "1" || in == "true");
       digitalWrite(cfg.ledPin, on);
@@ -87,7 +90,6 @@ void loop() {
     buttonPort->send(pressed ? "true" : "false");
     nextButtonCheck += 100;
   }
-
 
 }
 

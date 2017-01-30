@@ -3,9 +3,8 @@
 #include <WiFiClientSecure.h>
 #include <ESP8266WiFi.h>
 
-#include <PubSubClient.h>
 #include <Msgflo.h>
-
+#include <PubSubClient.h>
 
 struct Config {
   const String id = ""; // unused?
@@ -27,6 +26,7 @@ WiFiClient wifiClient; // used by WiFi
 PubSubClient mqttClient;
 msgflo::Engine *engine;
 msgflo::OutPort *buttonPort;
+msgflo::InPort *ledPort;
 long nextButtonCheck = 0;
 
 void setup() {
@@ -42,16 +42,21 @@ void setup() {
   mqttClient.setServer(cfg.mqttHost, cfg.mqttPort);
   mqttClient.setClient(wifiClient);
 
-  String clientId = "msgflo-button-";
-  clientId += WiFi.macAddress();
+  const String clientId = "msgflo-button-" + WiFi.macAddress();
 
   engine = msgflo::pubsub::createPubSubClientEngine(
-             "bitraf-iot/BlinkButton",
-             "Blinking Button",
+             "fosdem2017/RelayAndButton",
+             "Sends button state and allows controlling a relay",
              "lightbulb-o",
              &mqttClient, clientId.c_str(), cfg.mqttUsername, cfg.mqttPassword);
 
   buttonPort = engine->addOutPort("button-event", "any", "public/msgflo/button/" + cfg.id + "/event");
+
+  ledPort = engine->addInPort("led", "boolean", "public/msgflo/fofo/led", [](byte *data, int length) -> void {
+      const std::string in((char *)data, length);
+      const boolean on = (in == "1" || in == "true");
+      digitalWrite(cfg.ledPin, on);
+  });
 
   Serial.printf("Led pin: %d\r\n", cfg.ledPin);
   Serial.printf("Button pin: %d\r\n", cfg.buttonPin);
@@ -80,8 +85,7 @@ void loop() {
   if (millis() > nextButtonCheck) {
     const bool pressed = digitalRead(cfg.buttonPin);
     buttonPort->send(pressed ? "true" : "false");
-    digitalWrite(cfg.ledPin, pressed);
-    nextButtonCheck += 1000;
+    nextButtonCheck += 100;
   }
 
 

@@ -22,13 +22,7 @@ struct Config {
 } cfg;
 
 
-const auto participant = msgflo::Participant{
-  { role: cfg.role },
-  { icon: "lightbulb-o" },
-  { component: "fosdem2017/RelayAndButton" },
-  { label: "does the funkyfunky" },
-  { id: cfg.role },
-};
+const auto participant = msgflo::Participant("fosdem2017/RelayAndButton", cfg.role);
 
 WiFiClient wifiClient; // used by WiFi
 PubSubClient mqttClient;
@@ -55,7 +49,8 @@ void setup() {
 
   buttonPort = engine->addOutPort("button-event", "any", cfg.role+"/button");
 
-  ledPort = engine->addInPort("led", "boolean", cfg.role+"/led", [](byte *data, int length) -> void {
+  ledPort = engine->addInPort("led", "boolean", cfg.role+"/led",
+  [](byte *data, int length) -> void {
       const std::string in((char *)data, length);
       const boolean on = (in == "1" || in == "true");
       digitalWrite(cfg.ledPin, on);

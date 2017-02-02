@@ -22,7 +22,7 @@ struct Config {
 } cfg;
 
 
-const auto participant = msgflo::Participant("fosdem2017/RelayAndButton", cfg.role);
+const auto participant = msgflo::Participant("fosdem2017/Buttons", cfg.role);
 
 WiFiClient wifiClient; // used by WiFi
 PubSubClient mqttClient;

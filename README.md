@@ -1,5 +1,8 @@
 # MsgFlo demo @ FOSDEM 2017 IoT
 
+* [FOSDEM presentation, incl video](https://fosdem.org/2017/schedule/event/iot_msgflo/).
+* [Notes](https://github.com/msgflo/msgflo/tree/master/doc/fosdem2017) 
+
 ## Installing
 
 Flash ESP8266 devices with Arduino sketches.

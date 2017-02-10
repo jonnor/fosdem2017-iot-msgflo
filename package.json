@@ -20,5 +20,8 @@
   "devDependencies": {
     "mqtt": "^1.4.3",
     "msgflo": "^0.9.5"
+  },
+  "msgflo": {
+    "namespace": ""
   }
 }
